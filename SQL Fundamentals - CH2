@@ -1,0 +1,181 @@
+--TOP 10 Rows, percent--
+
+SELECT TOP 10 percent
+  SalesOrderNumber AS InvoiceNumber,
+  OrderDate,
+  SUM(SalesAmount) AS InvoiceSubTotal,
+  SUM(TaxAmt) AS TaxAmount,
+  SUM(OrderQuantity) AS TotalQuantity
+
+FROM FactInternetSales
+
+WHERE SalesTerritoryKey = 6
+
+GROUP BY SalesOrderNumber, OrderDate
+
+HAVING SUM(SalesAmount) > 200
+
+ORDER BY OrderDate DESC, InvoiceSubTotal DESC 
+;
+--OFFSET And FETCH--
+SELECT
+  SalesOrderNumber AS InvoiceNumber,
+  OrderDate,
+  SUM(SalesAmount) AS InvoiceSubTotal,
+  SUM(TaxAmt) AS TaxAmount,
+  SUM(OrderQuantity) AS TotalQuantity
+
+FROM FactInternetSales
+
+WHERE SalesTerritoryKey = 6
+
+GROUP BY SalesOrderNumber, OrderDate
+
+HAVING SUM(SalesAmount) > 200
+
+ORDER BY OrderDate DESC, InvoiceSubTotal DESC 
+
+OFFSET 10 ROWS FETCH NEXT 10 ROWS ONLY
+;
+
+--Distinct--
+  --COUNT(DISTINCT)--
+Select  COUNT(*) AS TableRowCount, COUNT(DISTINCT SalesOrderNumber) AS DistinctOrders, COUNT(SalesOrderNumber) AS TotalNumOrders
+
+FROM FactInternetSales
+
+--Operators--
+  --IN, AND, BEWTWEEN, OR--
+
+SELECT SalesOrderNumber AS InvoiceNumber, OrderDate, SUM(SalesAmount) AS InvoiceSubTotal, SUM(TaxAmt) AS TaxAmount, SUM(OrderQuantity) AS TotalQuantity
+
+FROM FactInternetSales
+
+WHERE SalesTerritoryKey IN (6,7,8) AND TaxAmt < 100 AND OrderDate BETWEEN '2013-01-01' AND '2013-12-31'
+
+GROUP BY SalesOrderNumber, OrderDate
+
+--Wildcards--
+  --LIKE, NOT LIKE, %, _--
+
+SELECT SalesOrderNumber AS InvoiceNumber, OrderDate, SUM(SalesAmount) AS InvoiceSubTotal, SUM(TaxAmt) AS TaxAmount, SUM(OrderQuantity) AS TotalQuantity
+
+FROM FactInternetSales
+
+WHERE SalesOrderNumber LIKE 'SO6%' AND SalesOrderNumber NOT LIKE 'SO___1'
+
+GROUP BY SalesOrderNumber, OrderDate
+
+--Case--
+  --CASE WHEN, CASE THEN, CASE ELSE, CASE END--
+
+SELECT SalesOrderNumber AS InvoiceNumber, OrderDate, SUM(SalesAmount) AS InvoiceSubTotal, SUM(TaxAmt) AS TaxAmount, SUM(OrderQuantity) AS TotalQuantity, 
+CASE WHEN SUM(SalesAmount) > 1000 
+THEN 'High Value' 
+WHEN SUM(SalesAmount) BETWEEN 500 AND 1000 THEN 'Medium Value' 
+ELSE 'Low Value' END AS OrderValueCategory
+
+FROM FactInternetSales
+
+WHERE SalesTerritoryKey IN (1,2,3)
+
+GROUP BY SalesOrderNumber, OrderDate
+
+--IIF Inline IF--
+  --IIF(condition, true_value, false_value)--
+  SELECT SalesOrderNumber AS InvoiceNumber, OrderDate, SUM(SalesAmount) AS InvoiceSubTotal, SUM(TaxAmt) AS TaxAmount, SUM(OrderQuantity) AS TotalQuantity,
+  IIF(SUM(SalesAmount) > 1000, 'High Value', 'Low or Medium Value') AS OrderValueCategory
+
+  FROM FactInternetSales
+
+  WHERE SalesTerritoryKey IN (1,2,3,4,5,6,7) AND SalesTerritoryKey NOT IN (8,9)
+
+  GROUP BY SalesOrderNumber, OrderDate
+
+--NULL Values--
+  --IS NULL, IS NOT NULL--
+
+SELECT TOP 30 PERCENT
+  CustomerKey,
+  FirstName,
+  LastName,
+  MiddleName,
+  EmailAddress,
+  Phone
+
+FROM DimCustomer
+
+WHERE MiddleName IS NOT NULL 
+;
+--COUNT NULLS (Middle Name)--
+
+SELECT 
+COUNT(*) AS AllRows,
+COUNT(MiddleName) AS NonNullMiddleNames
+
+FROM DimCustomer
+
+;
+
+SELECT *
+
+FROM DimEmployee
+
+WHERE MiddleName IS NULL
+
+;
+
+-- Ch 2 Student Exercise 3 --
+  --Query Distinct SON, Product Cost,AVG Sales, Conditional Custom Columns in Case and IIF; all by ProductKey--
+  
+SELECT
+ProductKey,
+COUNT(DISTINCT SalesOrderNumber) AS DistinctOrders,
+SUM(ROUND(TotalProductCost, 2)) AS TotalProductCost, 
+AVG(SalesAmount) AS AvgAmount, 
+CASE 
+  WHEN SUM(SalesAmount) >= 50000 THEN 'Platinum' 
+  WHEN SUM(SalesAmount) >= 20000 THEN 'Gold' 
+  ELSE 'Silver'
+  END AS RevenueTier,
+IIF(COUNT(*) > 20, 'High', 'Normal') AS HighVolumeFlag
+
+FROM FactInternetSales
+
+WHERE CurrencyKey = '19' 
+OR CurrencyKey = '100' 
+AND PromotionKey != '1'
+
+GROUP BY ProductKey
+
+HAVING SUM(SalesAmount) >= 10000
+
+ORDER BY ProductKey ASC
+
+;
+
+SELECT  
+DISTINCT ProductKey,
+AVG(SalesAmount) AS AvgSalesAmount
+
+FROM FactInternetSales
+
+GROUP BY ProductKey
+
+ORDER BY ProductKey ASC
+
+;
+
+--CH 2 Student Exercise 4 --
+
+SELECT  Title,
+COUNT(*) AS TotalCustomers,
+Count(DISTINCT LastName) AS DistinctLastNames
+
+FROM DimCustomer
+
+WHERE Title LIKE 'M%' OR Title IS NULL
+
+GROUP BY Title
+
+ORDER BY TotalCustomers ASC
